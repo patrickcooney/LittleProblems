@@ -1,0 +1,7 @@
+*.exe
+*.dll
+*.suo
+*.pdb
+obj/
+bin/
+TestResult.xml

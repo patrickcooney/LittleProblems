@@ -1,0 +1,8 @@
+﻿<NUnitProject>
+  <Settings activeconfig="Debug"/>
+  <Config name="Debug">
+    <assembly path="..\testlibrary2\bin\debug\testlibrary2.dll"/> 
+    <assembly path="..\testlibrary1\bin\debug\testlibrary1.dll" serial="false"/>
+    <assembly path="..\serialtestlibrary1\bin\debug\serialtestlibrary1.dll" serial="true"/>
+  </Config>
+</NUnitProject>
