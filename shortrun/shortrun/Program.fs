@@ -152,68 +152,67 @@ let printcol col fmt =
             System.Console.ForegroundColor <- orig)
         fmt
 
-let getColour test = 
-    let notPassed = test.Failures + test.Errors
+let getColour result = 
+    let notPassed = result.Failures + result.Errors
     if notPassed > 0u then
         System.ConsoleColor.Red
-    elif test.Run = 0u then
+    elif result.Run = 0u then
         System.ConsoleColor.Yellow
     else
         System.ConsoleColor.White
 
-//let printTest test = 
-//    printcol (getColour test) "%s\r\nRun: %d\tErrors: %d\tFailures: %d\r\n" test.AssemblyPath test.Run test.Errors test.Failures
-//
-//let printTests tests config = 
-//
-//    if config.Verbose then
-//        List.iter (fun x -> (
-//                                System.Console.WriteLine()
-//                                printcol System.ConsoleColor.Blue "%s" x.AssemblyPath
-//                                System.Console.WriteLine x.Text
-//            )) tests
-//
-//    List.iter printTest tests
-// 
-//let createParallelSets (tests : seq<testRun>) = 
-//    seq {
-//    //yield all the serial tests as single item lists
-//    for t in (Seq.filter  (function (x : testRun) -> x.Serial) tests) do
-//        yield [ t ]
-//    
-//    //and then yield all the parallel tests in one list
-//    yield [ 
-//        for t in (Seq.filter (function x -> not x.Serial) tests) do
-//            yield t
-//        ]
-//    }
-//
-//[<EntryPoint>]
-//let main args = 
-//    printUsage()
-//
-//    let s = Stopwatch.StartNew()
-//
-//    let tests = getTests (getNUnitFilePath args)
-//
-//    printcol System.ConsoleColor.Blue "Running tests in %d assemblies." tests.Length
-//    
-//    let config = getConfig args
-//
-//    printfn "Using nunit path: %s" config.NUnitConsolePath
-//    printfn "Using timeout millis: %d" config.TimeoutMillis
-//    printfn "Using verbose: %b" config.Verbose
-//
-//    if System.IO.File.Exists config.NUnitConsolePath then
-//        
-//        for testSet in createParallelSets tests do
-//            runTests testSet config
-//
-//        s.Stop()
-//        printcol System.ConsoleColor.Blue "Completed in %d milliseconds" s.ElapsedMilliseconds
-//        printTests tests config
-//    else
-//            printcol System.ConsoleColor.Red "Path to nunit console '%s' does not exist. No tests run." config.NUnitConsolePath
-//
-//    0
-//
+let printResult result = 
+    printcol (getColour result) "%s\r\nRun: %d\tErrors: %d\tFailures: %d\r\n" result.Test.AssemblyPath result.Run result.Errors result.Failures
+
+let printResults config = 
+
+        for result in results do
+            if config.Verbose then
+                System.Console.WriteLine()
+                printcol System.ConsoleColor.Blue "%s" result.Test.AssemblyPath
+                System.Console.WriteLine result.Text 
+
+            printResult result
+ 
+let createParallelSets (tests : seq<testRun>) = 
+    seq {
+    //yield all the serial tests as single item lists
+    for t in (Seq.filter  (function (x : testRun) -> x.Serial) tests) do
+        yield [ t ]
+    
+    //and then yield all the parallel tests in one list
+    yield [ 
+        for t in (Seq.filter (function x -> not x.Serial) tests) do
+            yield t
+        ]
+    }
+
+[<EntryPoint>]
+let main args = 
+    printUsage()
+
+    let s = Stopwatch.StartNew()
+
+    let tests = getTests (getNUnitFilePath args)
+
+    printcol System.ConsoleColor.Blue "Running tests in %d assemblies." tests.Length
+    
+    let config = getConfig args
+
+    printfn "Using nunit path: %s" config.NUnitConsolePath
+    printfn "Using timeout millis: %d" config.TimeoutMillis
+    printfn "Using verbose: %b" config.Verbose
+
+    if System.IO.File.Exists config.NUnitConsolePath then
+        
+        for testSet in createParallelSets tests do
+            runTests testSet config
+
+        s.Stop()
+        printcol System.ConsoleColor.Blue "Completed in %d milliseconds" s.ElapsedMilliseconds
+        printResults config
+    else
+            printcol System.ConsoleColor.Red "Path to nunit console '%s' does not exist. No tests run." config.NUnitConsolePath
+
+    0
+
