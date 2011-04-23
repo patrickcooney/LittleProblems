@@ -38,35 +38,43 @@ let createTestProcess (test : testRun) (config : testConfig) =
     p.StartInfo <- pi
     p
 
+let addTestResult (config : testConfig) (test : testRun) (output : string) = 
+    let exp = new RegularExpressions.Regex("Tests run: ([0-9]+), Errors: ([0-9]+), Failures: ([0-9]+)")
+    let expMatch = exp.Match output
+
+    if expMatch.Success then
+        let run = (System.Convert.ToUInt32 (expMatch.Groups.[1].Captures.[0].Value))
+        let errors = (System.Convert.ToUInt32 (expMatch.Groups.[2].Captures.[0].Value))
+        let failures = (System.Convert.ToUInt32 (expMatch.Groups.[3].Captures.[0].Value))
+
+        let result = { Run = run; Errors = errors; Failures = failures; Text = output; Test = test; }
+
+        results.Add(result)
+
+    elif config.Verbose then
+        printfn "No match for regex using output '%s'" output
+
+let getOutput (config : testConfig) (p : Process) =
+    let o = new StringBuilder()
+    let s = Stopwatch.StartNew()
+    
+    while not(p.WaitForExit 10) && int(s.ElapsedMilliseconds) < config.TimeoutMillis do
+        ignore(o.Append(p.StandardOutput.ReadToEnd()))
+
+    ignore(o.Append(p.StandardOutput.ReadToEnd()))
+
+    //should pass timeout to nunit rather than killing
+    if not p.HasExited then p.Kill() 
+
+    o.ToString()
+
 let runTest (config : testConfig) (test : testRun)  =      
     async {  
         let p = createTestProcess test config
 
-        if (File.Exists p.StartInfo.FileName) && p.Start() then
-            let allOutput = new StringBuilder()
-            let s = Stopwatch.StartNew()
-    
-            while not(p.WaitForExit 10) && int(s.ElapsedMilliseconds) < config.TimeoutMillis do
-                ignore(allOutput.Append(p.StandardOutput.ReadToEnd()))
+        if (File.Exists p.StartInfo.FileName) && p.Start() then            
+            addTestResult config test (getOutput config p)
 
-            ignore(allOutput.Append(p.StandardOutput.ReadToEnd()))
-            
-            let exp = new RegularExpressions.Regex("Tests run: ([0-9]+), Errors: ([0-9]+), Failures: ([0-9]+)")
-            let expMatch = exp.Match (allOutput.ToString())
-
-            if expMatch.Success then
-                let run = (System.Convert.ToUInt32 (expMatch.Groups.[1].Captures.[0].Value))
-                let errors = (System.Convert.ToUInt32 (expMatch.Groups.[2].Captures.[0].Value))
-                let failures = (System.Convert.ToUInt32 (expMatch.Groups.[3].Captures.[0].Value))
-                let text = allOutput.ToString()
-
-                let result = { Run = run; Errors = errors; Failures = failures; Text = text; Test = test; }
-
-                results.Add(result)
-
-            elif config.Verbose then
-                printfn "No match for regex using output '%s'" (allOutput.ToString())
-             
         ()    
     }
 
