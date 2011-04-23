@@ -1,35 +1,36 @@
 ﻿open System.Collections.Concurrent
 open System.Diagnostics
 open System.IO
-open System.Xml
 open System.Text;
 open System.Threading.Tasks
+open System.Xml
 
-type testRun = { Serial: bool; AssemblyPath: string; NUnitFilePath : string; }
+type testRun = { Serial: bool; AssemblyPath: string; }
 type testResult = { Run : uint32; Errors: uint32; Failures : uint32; Text : string; Test : testRun; }
-type testConfig = { NUnitConsolePath : string; TimeoutMillis : int32; Verbose: bool;}
+type testConfig = { NUnitConsolePath : string; TimeoutMillis : int32; Verbose: bool; TestFilePath: string}
 
 let results = new ConcurrentBag<testResult>()
 
-let isNull = function null -> true | _ -> false
-
-let getFilesAndSerial2 (nunit : XmlDocument) = 
+let getTestRunsFromXml (nunit : XmlDocument) = 
     seq { for a in nunit.SelectNodes("//NUnitProject/Config/assembly") do
             let serialNode = a.Attributes.GetNamedItem("serial")            
             let isSerial = not (serialNode = null) && not (serialNode.Value = null) && serialNode.Value.ToUpper() = "TRUE"   // todo create some sort of istrue func and use this here and for verbose             
-            yield (a.Attributes.GetNamedItem("path").Value, isSerial)
+            let pathNode = a.Attributes.GetNamedItem("path")
+            let path = if pathNode = null then "" else pathNode.Value
+            yield { Serial = isSerial; AssemblyPath = path; }
         }
 
-let getFilesAndSerial (nunitpath : string) = 
+let getTestRunsFromFile (nunitpath : string) = 
     if File.Exists nunitpath then
         let x = new XmlDocument()
         x.Load(nunitpath)
-        getFilesAndSerial2 x
+        getTestRunsFromXml x
     else
-        Seq.empty<string * bool>
+        Seq.empty<testRun>
+
 let createTestProcess (test : testRun) (config : testConfig) =        
     let pi = new ProcessStartInfo(config.NUnitConsolePath, test.AssemblyPath)
-    pi.WorkingDirectory <- (new System.IO.FileInfo(test.NUnitFilePath)).DirectoryName
+    pi.WorkingDirectory <- (new System.IO.FileInfo(config.TestFilePath)).DirectoryName
     pi.RedirectStandardOutput <- true
     pi.CreateNoWindow <- true
     pi.UseShellExecute <- false
@@ -37,7 +38,7 @@ let createTestProcess (test : testRun) (config : testConfig) =
     p.StartInfo <- pi
     p
 
-let runTest (test : testRun) (config : testConfig) =      
+let runTest (config : testConfig) (test : testRun)  =      
     async {  
         let p = createTestProcess test config
 
@@ -69,14 +70,8 @@ let runTest (test : testRun) (config : testConfig) =
         ()    
     }
 
-let getTests pathToNUnitFile = 
-    [
-        for f in getFilesAndSerial pathToNUnitFile do
-            yield { Serial = snd f; AssemblyPath = fst f; NUnitFilePath = pathToNUnitFile; }
-    ]   
-
 let runTests (tests : testRun list) (config : testConfig) = 
-    [ for t in tests do yield runTest t config] |> Async.Parallel |> Async.RunSynchronously
+    List.map (runTest config) tests |> Async.Parallel |> Async.RunSynchronously
 
 let getArgValue (arg : string) = 
     let sep = '='
@@ -118,7 +113,7 @@ let printUsage () =
     printfn "shortrun.exe f={path to .nunit file} t={optional timeout in milliseconds} r={optional path to nunit-console.exe} v={optional verbose logging, true or false}\r\n"
 
 let getConfig args = 
-    { NUnitConsolePath = getNUnitPath args; TimeoutMillis = getTimeout args; Verbose = getVerbose args}
+    { NUnitConsolePath = getNUnitPath args; TimeoutMillis = getTimeout args; Verbose = getVerbose args; TestFilePath = getNUnitFilePath args }
 
 let printcol col fmt = 
     Printf.kprintf
@@ -167,12 +162,8 @@ let createParallelSets (tests : seq<testRun>) =
 let main args = 
     printUsage()
 
-    let s = Stopwatch.StartNew()
 
-    let tests = getTests (getNUnitFilePath args)
-
-    printcol System.ConsoleColor.Blue "Running tests in %d assemblies." tests.Length
-    
+    let tests = getTestRunsFromFile (getNUnitFilePath args)    
     let config = getConfig args
 
     printfn "Using nunit path: %s" config.NUnitConsolePath
@@ -181,6 +172,10 @@ let main args =
 
     if System.IO.File.Exists config.NUnitConsolePath then
         
+        printcol System.ConsoleColor.Blue "Running tests in %d assemblies." (Seq.length tests)
+
+        let s = Stopwatch.StartNew()
+
         for testSet in createParallelSets tests do
             ignore (runTests testSet config)
 
@@ -188,7 +183,7 @@ let main args =
         printcol System.ConsoleColor.Blue "Completed in %d milliseconds" s.ElapsedMilliseconds
         printResults config
     else
-            printcol System.ConsoleColor.Red "Path to nunit console '%s' does not exist. No tests run." config.NUnitConsolePath
+        printcol System.ConsoleColor.Red "Path to nunit console '%s' does not exist. No tests run." config.NUnitConsolePath
 
     0
 
