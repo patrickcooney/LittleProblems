@@ -27,21 +27,6 @@ let getFilesAndSerial (nunitpath : string) =
         getFilesAndSerial2 x
     else
         Seq.empty<string * bool>
-//
-//let summarise tests =
-//    Seq.fold (fun a c -> { 
-//                            Serial = false;
-//                            AssemblyPath = a.AssemblyPath; 
-//                            NUnitFilePath = c.NUnitFilePath;
-//                            Run = a.Run + c.Run; 
-//                            Errors = a.Errors + c.Errors; 
-//                            Failures = a.Failures + c.Failures;
-//                            Completed = a.Completed && c.Completed;
-//                            Text = (System.String.Concat(a.Completed,  " ", c.Completed))
-//        }) 
-//        { Serial = false; AssemblyPath= "all"; NUnitFilePath = ""; Run = 0u; Errors = 0u; Failures = 0u; Completed = true; Text = "";} tests
-//
-
 let createTestProcess (test : testRun) (config : testConfig) =        
     let pi = new ProcessStartInfo(config.NUnitConsolePath, test.AssemblyPath)
     pi.WorkingDirectory <- (new System.IO.FileInfo(test.NUnitFilePath)).DirectoryName
@@ -52,35 +37,37 @@ let createTestProcess (test : testRun) (config : testConfig) =
     p.StartInfo <- pi
     p
 
-let runTest (test : testRun) (config : testConfig) =        
-    let p = createTestProcess test config
+let runTest (test : testRun) (config : testConfig) =      
+    async {  
+        let p = createTestProcess test config
 
-    if (File.Exists p.StartInfo.FileName) && p.Start() then
-        let allOutput = new StringBuilder()
-        let s = Stopwatch.StartNew()
+        if (File.Exists p.StartInfo.FileName) && p.Start() then
+            let allOutput = new StringBuilder()
+            let s = Stopwatch.StartNew()
     
-        while not(p.WaitForExit 10) && int(s.ElapsedMilliseconds) < config.TimeoutMillis do
+            while not(p.WaitForExit 10) && int(s.ElapsedMilliseconds) < config.TimeoutMillis do
+                ignore(allOutput.Append(p.StandardOutput.ReadToEnd()))
+
             ignore(allOutput.Append(p.StandardOutput.ReadToEnd()))
-
-        ignore(allOutput.Append(p.StandardOutput.ReadToEnd()))
             
-        let exp = new RegularExpressions.Regex("Tests run: ([0-9]+), Errors: ([0-9]+), Failures: ([0-9]+)")
-        let expMatch = exp.Match (allOutput.ToString())
+            let exp = new RegularExpressions.Regex("Tests run: ([0-9]+), Errors: ([0-9]+), Failures: ([0-9]+)")
+            let expMatch = exp.Match (allOutput.ToString())
 
-        if expMatch.Success then
-            let run = (System.Convert.ToUInt32 (expMatch.Groups.[1].Captures.[0].Value))
-            let errors = (System.Convert.ToUInt32 (expMatch.Groups.[2].Captures.[0].Value))
-            let failures = (System.Convert.ToUInt32 (expMatch.Groups.[3].Captures.[0].Value))
-            let text = allOutput.ToString()
+            if expMatch.Success then
+                let run = (System.Convert.ToUInt32 (expMatch.Groups.[1].Captures.[0].Value))
+                let errors = (System.Convert.ToUInt32 (expMatch.Groups.[2].Captures.[0].Value))
+                let failures = (System.Convert.ToUInt32 (expMatch.Groups.[3].Captures.[0].Value))
+                let text = allOutput.ToString()
 
-            let result = { Run = run; Errors = errors; Failures = failures; Text = text; Test = test; }
+                let result = { Run = run; Errors = errors; Failures = failures; Text = text; Test = test; }
 
-            results.Add(result)
+                results.Add(result)
 
-        elif config.Verbose then
-            printfn "No match for regex using output '%s'" (allOutput.ToString())
+            elif config.Verbose then
+                printfn "No match for regex using output '%s'" (allOutput.ToString())
              
-    ()    
+        ()    
+    }
 
 let getTests pathToNUnitFile = 
     [
@@ -88,18 +75,8 @@ let getTests pathToNUnitFile =
             yield { Serial = snd f; AssemblyPath = fst f; NUnitFilePath = pathToNUnitFile; }
     ]   
 
-let waitForCompletion (tests : testRun list) (config : testConfig) = 
-
-    let endTime = System.DateTime.Now.AddMilliseconds (float config.TimeoutMillis)
-
-    while System.DateTime.Now < endTime && not (results.Count = tests.Length) do
-        ignore(System.Threading.Thread.Sleep 200)
-
 let runTests (tests : testRun list) (config : testConfig) = 
-    for test in tests do
-        ignore (System.Threading.ThreadPool.QueueUserWorkItem(fun x -> runTest test config))
-
-    waitForCompletion tests config
+    [ for t in tests do yield runTest t config] |> Async.Parallel |> Async.RunSynchronously
 
 let getArgValue (arg : string) = 
     let sep = '='
@@ -161,18 +138,17 @@ let getColour result =
     else
         System.ConsoleColor.White
 
-let printResult result = 
-    printcol (getColour result) "%s\r\nRun: %d\tErrors: %d\tFailures: %d\r\n" result.Test.AssemblyPath result.Run result.Errors result.Failures
+let printVerboseResult result = 
+            System.Console.WriteLine()
+            printcol System.ConsoleColor.Blue "%s" result.Test.AssemblyPath
+            System.Console.WriteLine result.Text 
+
+let printResult verbose result =
+    if verbose then printVerboseResult result
+    else printcol (getColour result) "%s\r\nRun: %d\tErrors: %d\tFailures: %d\r\n" result.Test.AssemblyPath result.Run result.Errors result.Failures
 
 let printResults config = 
-
-        for result in results do
-            if config.Verbose then
-                System.Console.WriteLine()
-                printcol System.ConsoleColor.Blue "%s" result.Test.AssemblyPath
-                System.Console.WriteLine result.Text 
-
-            printResult result
+    Seq.iter (printResult config.Verbose) results
  
 let createParallelSets (tests : seq<testRun>) = 
     seq {
@@ -206,7 +182,7 @@ let main args =
     if System.IO.File.Exists config.NUnitConsolePath then
         
         for testSet in createParallelSets tests do
-            runTests testSet config
+            ignore (runTests testSet config)
 
         s.Stop()
         printcol System.ConsoleColor.Blue "Completed in %d milliseconds" s.ElapsedMilliseconds
