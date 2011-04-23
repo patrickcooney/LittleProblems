@@ -148,13 +148,11 @@ let printResults config =
 let createParallelSets (tests : seq<testRun>) = 
     seq {
     //yield all the serial tests as single item lists
-    for t in (Seq.filter  (function (x : testRun) -> x.Serial) tests) do
-        yield [ t ]
+    for t in (Seq.filter  (function (x : testRun) -> x.Serial) tests) -> [t]
     
     //and then yield all the parallel tests in one list
     yield [ 
-        for t in (Seq.filter (function x -> not x.Serial) tests) do
-            yield t
+        for t in (Seq.filter (function x -> not x.Serial) tests) -> t
         ]
     }
 
