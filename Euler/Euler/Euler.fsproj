@@ -49,6 +49,8 @@
     <Compile Include="P8.fs" />
     <Compile Include="P9.fs" />
     <Compile Include="P10.fs" />
+    <Compile Include="P11.fs" />
+    <Compile Include="P12.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
