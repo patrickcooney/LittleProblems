@@ -45,7 +45,10 @@
     <Compile Include="fib.fs" />
     <Compile Include="P1.fs" />
     <Compile Include="P2.fs" />
+    <Compile Include="P3.fs" />
+    <Compile Include="P4.fs" />
     <Compile Include="Program.fs" />
+    <Compile Include="primes.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
