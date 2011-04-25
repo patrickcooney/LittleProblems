@@ -13,7 +13,7 @@ namespace SerialTestLibrary1
         [Test]
         public void LongTest()  
         {
-            Thread.Sleep(20);
+            Thread.Sleep(20000);
             Assert.IsTrue(true);
         }
 

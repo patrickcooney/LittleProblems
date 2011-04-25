@@ -20,9 +20,6 @@ namespace TestLibrary1
         [Test]
         public void X10()
         {
-            //3602 (4191) - pass
-            //3702 - fail
-            //3652 (4098) - fail with regex
             for (int i = 0; i < 5000; i++) Console.Write(" ");
             Thread.Sleep(10);
         }

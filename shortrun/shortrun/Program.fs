@@ -29,11 +29,14 @@ let getTestRunsFromFile (nunitpath : string) =
         Seq.empty<testRun>
 
 let createTestProcess (test : testRun) (config : testConfig) =        
-    let pi = new ProcessStartInfo(config.NUnitConsolePath, test.AssemblyPath)
+    //nunit-console timeout is per-test, which isn't what we want, but might still cause a test run to abandoned, so is included
+    let args = sprintf "%s /timeout=%d" test.AssemblyPath config.TimeoutMillis
+    let pi = new ProcessStartInfo(config.NUnitConsolePath, args)
     pi.WorkingDirectory <- (new System.IO.FileInfo(config.TestFilePath)).DirectoryName
     pi.RedirectStandardOutput <- true
     pi.CreateNoWindow <- true
     pi.UseShellExecute <- false
+    
     let p = new System.Diagnostics.Process()
     p.StartInfo <- pi
     p
@@ -63,7 +66,6 @@ let getOutput (config : testConfig) (p : Process) =
 
     ignore(o.Append(p.StandardOutput.ReadToEnd()))
 
-    //should pass timeout to nunit rather than killing
     if not p.HasExited then p.Kill() 
 
     o.ToString()
@@ -150,8 +152,26 @@ let printResult verbose result =
     if verbose then printVerboseResult result
     else printcol (getColour result) "%s\r\nRun: %d\tErrors: %d\tFailures: %d\r\n" result.Test.AssemblyPath result.Run result.Errors result.Failures
 
+let printSummary results = 
+    let mutable run = 0u
+    let mutable errs = 0u
+    let mutable failures = 0u
+    for result in results do
+        run <- run + result.Run
+        errs <- errs + result.Errors
+        failures <- failures + result.Failures
+
+//    print "Results across all tests."
+    let allResults = { Run = run; Errors = errs; Failures = failures; Text = ""; Test = { Serial = false; AssemblyPath = "";}}
+    printf "Result of all test runs:"
+    printResult false allResults
+
 let printResults config = 
     Seq.iter (printResult config.Verbose) results
+    printSummary results
+
+
+
  
 let createParallelSets (tests : seq<testRun>) = 
     seq {
