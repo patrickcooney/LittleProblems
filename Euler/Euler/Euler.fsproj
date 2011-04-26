@@ -51,6 +51,11 @@
     <Compile Include="P10.fs" />
     <Compile Include="P11.fs" />
     <Compile Include="P12.fs" />
+    <Compile Include="P13.fs" />
+    <Compile Include="P14.fs" />
+    <Compile Include="P15.fs" />
+    <Compile Include="P16.fs" />
+    <Compile Include="P17.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
