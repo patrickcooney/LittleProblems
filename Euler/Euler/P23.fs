@@ -22,16 +22,18 @@ let noSumOf2 x abound (hashed : HashSet<int>) =
 let run =
     let max = 28122
 
-    let abound = Seq.cache <| abundant max
-
     let hashed = new HashSet<int>()
 
-    for a in abound do
-        hashed.Add a |> ignore
+    let s = Stopwatch.StartNew()
+    for a in abundant max do
+        for b in abundant max do
+            ignore <| hashed.Add(a + b)
+
+    
 
     let s = Stopwatch.StartNew()
     let range = seq { 1 .. max }
-    let sum = Seq.sum <| Seq.filter (fun x -> noSumOf2 x abound hashed) range
+    let sum = Seq.sum <| Seq.filter (fun x -> not <| hashed.Contains(x)) range
 
     s.Stop()
 

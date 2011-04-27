@@ -1,10 +1,10 @@
 ﻿module fib
 
 let first = 
-    1UL
+    1I
 
 let second = 
-    1UL
+    1I
 
 let next prev prevprev = 
     prev + prevprev

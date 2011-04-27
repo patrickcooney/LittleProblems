@@ -66,6 +66,8 @@
     <Compile Include="P21.fs" />
     <Compile Include="P22.fs" />
     <Compile Include="P23.fs" />
+    <Compile Include="P24.fs" />
+    <Compile Include="P25.fs" />
     <Compile Include="Program.fs" />
     <Content Include="names.txt" />
   </ItemGroup>
