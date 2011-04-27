@@ -2,5 +2,5 @@
 
 [<EntryPoint>]
 let main args = 
-    P20.run
+    P22.run
     0
