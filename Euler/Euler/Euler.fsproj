@@ -38,11 +38,13 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="fib.fs" />
+    <Compile Include="fact.fs" />
+    <Compile Include="primes.fs" />
+    <Compile Include="digitsum.fs" />
     <Compile Include="P1.fs" />
     <Compile Include="P2.fs" />
     <Compile Include="P3.fs" />
     <Compile Include="P4.fs" />
-    <Compile Include="primes.fs" />
     <Compile Include="P5.fs" />
     <Compile Include="P6.fs" />
     <Compile Include="P7.fs" />
@@ -56,6 +58,9 @@
     <Compile Include="P15.fs" />
     <Compile Include="P16.fs" />
     <Compile Include="P17.fs" />
+    <Compile Include="P18.fs" />
+    <Compile Include="P19.fs" />
+    <Compile Include="P20.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
