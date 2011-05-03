@@ -35,4 +35,4 @@ for s in sidelensupto(1001):
         total += spiral
         diag += diagcontrib
 
-print "diag sum is %d" % diag     #669171001
+print("diag sum is %d" % diag) #669171001
