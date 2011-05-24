@@ -26,7 +26,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>
@@ -38,44 +38,45 @@
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="divisors.fs" />
+    <None Include="divisors.fs" />
     <Compile Include="digits.fs" />
-    <Compile Include="fib.fs" />
-    <Compile Include="fact.fs" />
-    <Compile Include="primes.fs" />
-    <Compile Include="digitsum.fs" />
-    <Compile Include="P1.fs" />
-    <Compile Include="P2.fs" />
-    <Compile Include="P3.fs" />
-    <Compile Include="P4.fs" />
-    <Compile Include="P5.fs" />
-    <Compile Include="P6.fs" />
-    <Compile Include="P7.fs" />
-    <Compile Include="P8.fs" />
-    <Compile Include="P9.fs" />
-    <Compile Include="P10.fs" />
-    <Compile Include="P11.fs" />
-    <Compile Include="P12.fs" />
-    <Compile Include="P13.fs" />
-    <Compile Include="P14.fs" />
-    <Compile Include="P15.fs" />
-    <Compile Include="P16.fs" />
-    <Compile Include="P17.fs" />
-    <Compile Include="P18.fs" />
-    <Compile Include="P19.fs" />
-    <Compile Include="P20.fs" />
-    <Compile Include="P21.fs" />
-    <Compile Include="P22.fs" />
-    <Compile Include="P23.fs" />
-    <Compile Include="P24.fs" />
-    <Compile Include="P25.fs" />
-    <Compile Include="P26.fs" />
-    <Compile Include="P27.fs" />
-    <Compile Include="P29.fs" />
+    <None Include="fib.fs" />
+    <None Include="fact.fs" />
+    <None Include="primes.fs" />
+    <None Include="digitsum.fs" />
+    <None Include="P1.fs" />
+    <None Include="P2.fs" />
+    <None Include="P3.fs" />
+    <None Include="P4.fs" />
+    <None Include="P5.fs" />
+    <None Include="P6.fs" />
+    <None Include="P7.fs" />
+    <None Include="P8.fs" />
+    <None Include="P9.fs" />
+    <None Include="P10.fs" />
+    <None Include="P11.fs" />
+    <None Include="P12.fs" />
+    <None Include="P13.fs" />
+    <None Include="P14.fs" />
+    <None Include="P15.fs" />
+    <None Include="P16.fs" />
+    <None Include="P17.fs" />
+    <None Include="P18.fs" />
+    <None Include="P19.fs" />
+    <None Include="P20.fs" />
+    <None Include="P21.fs" />
+    <None Include="P22.fs" />
+    <None Include="P23.fs" />
+    <None Include="P24.fs" />
+    <None Include="P25.fs" />
+    <None Include="P26.fs" />
+    <None Include="P27.fs" />
+    <None Include="P29.fs" />
     <Compile Include="P30.fs" />
+    <Compile Include="P31.fs" />
+    <Compile Include="P32.fs" />
     <Compile Include="Program.fs" />
     <Content Include="names.txt" />
-    <Compile Include="P31.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
